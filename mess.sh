@@ -1,5 +1,13 @@
 #!/usr/bin/env bash
-export subnets=([0]=172.31.1.0/24 [1]=172.31.2.0/24 [2]=172.31.3.0/24)
+declare -A nodes
+nodes["M1"]="6370 16370"
+nodes["M2"]="6380 16380"
+nodes["M3"]="6390 16390"
+nodes["S1"]="6371 16371"
+nodes["S2"]="6381 16381"
+nodes["S3"]="6391 16391"
+
+declare -A state
 
 function log {
     echo $(date +"%Y/%m/%d %X") $@
@@ -7,26 +15,58 @@ function log {
 
 function status {
     for i in "${!state[@]}"; do
-        log "node $i    -> ${state[$i]}"
+        log "node $i\t-> ${state[$i]}"
     done
 }
 
-function shut {
-    for i in ${@:-0 1 2}; do
+function _shut {
+    portIndex=$1
+    shift
+    for i in ${@:-${!nodes[@]}}; do
         log "isolating node $i"
-        #        sudo iptables -I ISOLATION 1 -d ${subnets[$i]} -j DROP
-        sudo iptables -I ISOLATION 1 -s ${subnets[$i]} -j DROP
+        ports=(${nodes[$i]})
+        sudo iptables -I ISOLATION 1 -p tcp --sport ${ports[$portIndex]} -j DROP
+        sudo iptables -I ISOLATION 1 -p tcp --dport ${ports[$portIndex]} -j DROP
         state[$i]="shut down"
     done
 }
 
-function open {
-    for i in ${@:-0 1 2}; do
+function ushut {
+    _shut 0 $@ 
+}
+
+function ashut {
+    _shut 1 $@ 
+}
+
+function shut {
+    ushut $@
+    ashut $@
+}
+
+function _open {
+    portIndex=$1
+    shift
+    for i in ${@:-${!nodes[@]}}; do
+        ports=(${nodes[$i]})
         log "making node $i reachable"
-        #        sudo iptables -D ISOLATION -d ${subnets[$i]} -j DROP
-        sudo iptables -D ISOLATION -s ${subnets[$i]} -j DROP
+        sudo iptables -D ISOLATION -p tcp --sport ${ports[$portIndex]} -j DROP
+        sudo iptables -D ISOLATION -p tcp --dport ${ports[$portIndex]} -j DROP
         state[$i]="opened"
     done
+}
+
+function uopen {
+    _open 0 $@ 
+}
+
+function aopen {
+    _open 1 $@ 
+}
+
+function open {
+    uopen $@
+    aopen $@
 }
 
 function setup {
@@ -34,27 +74,23 @@ function setup {
 
     sudo iptables -A INPUT -p tcp --dport ssh -j ACCEPT
     sudo iptables -A OUTPUT -p tcp --dport ssh -j ACCEPT
-    sudo iptables -A INPUT -s 88.136.162.240/32 -j ACCEPT
-    sudo iptables -A INPUT -d 88.136.162.240/32 -j ACCEPT
-    sudo iptables -A OUTPUT -s 88.136.162.240/32 -j ACCEPT
-    sudo iptables -A OUTPUT -d 88.136.162.240/32 -j ACCEPT
 
-    for i in "${!subnets[@]}"; do state[$i]="opened"; done
+    for i in "${!nodes[@]}"; do state[$i]="opened"; done
     # ISOLATION will host failures.
     sudo iptables -N ISOLATION
     # MONITOR will allow us to see the actual flow of packets (iptables -L MONITOR n -v).
     sudo iptables -N MONITOR
-    for i in "${!subnets[@]}"; do
-        sudo iptables -A INPUT -s ${subnets[$i]} -j ISOLATION
-        sudo iptables -A INPUT -d ${subnets[$i]} -j ISOLATION
-        sudo iptables -A OUTPUT -s ${subnets[$i]} -j ISOLATION
-        sudo iptables -A OUTPUT -d ${subnets[$i]} -j ISOLATION
-        sudo iptables -A INPUT -s ${subnets[$i]} -j MONITOR
-        sudo iptables -A INPUT -d ${subnets[$i]} -j MONITOR
-        sudo iptables -A OUTPUT -s ${subnets[$i]} -j MONITOR
-        sudo iptables -A OUTPUT -d ${subnets[$i]} -j MONITOR
-        sudo iptables -A MONITOR -s ${subnets[$i]} -j RETURN
-        sudo iptables -A MONITOR -d ${subnets[$i]} -j RETURN
+    for i in "${!nodes[@]}"; do
+        for port in ${nodes[$i]}; do
+            for chain in {INPUT,OUTPUT}; do
+                sudo iptables -A $chain -p tcp --sport $port -j ISOLATION
+                sudo iptables -A $chain -p tcp --dport $port -j ISOLATION
+                sudo iptables -A $chain -p tcp --sport $port -j MONITOR
+                sudo iptables -A $chain -p tcp --dport $port -j MONITOR
+            done
+            sudo iptables -A MONITOR -p tcp --sport $port -j RETURN
+            sudo iptables -A MONITOR -p tcp --dport $port -j RETURN
+        done
     done
 }
 
@@ -65,6 +101,7 @@ function tear {
     sudo iptables -F MONITOR
     sudo iptables -X ISOLATION
     sudo iptables -X MONITOR
+    unset state nodes
 }
 
 function monitor {
@@ -75,7 +112,7 @@ function reset {
     sudo iptables -Z MONITOR
 }
 
-export -f status shut open
+export -f status ushut uopen ashut aopen
 export -f setup tear monitor reset
 
 sudo iptables -nvL MONITOR 1>/dev/null 2>&1 || setup
