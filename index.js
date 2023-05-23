@@ -19,14 +19,14 @@ const agent = {
 
 const seconds = 1000;
 
-const REDIS_CIRCUIT_BREAKER_MAX_FAILURES = 5;
+const REDIS_CIRCUIT_BREAKER_MAX_FAILURES = 5000;
 const REDIS_CIRCUIT_BREAKER_COOLDOWN = 10 * seconds;
 const REDIS_CIRCUIT_BREAKER_MAX_COOLDOWN = 30 * seconds;
 const REDIS_MIN_RECONNECT_DELAY_MS = 100 * seconds;
 const REDIS_MAX_RECONNECT_DELAY_MS = 500 * seconds;
 const REDIS_RECONNECT_DELAY_JITTER = 100;
-const REDIS_HOST = '127.0.0.1';
-const REDIS_PORT = 6380;
+const REDIS_HOST = '127.1.1.1';
+const REDIS_PORT = 6379;
 const REDIS_PASSWORD = '';
 const REDIS_TLS = false;
 const REDIS_CLUSTER_MODE = true;

@@ -6,52 +6,52 @@ services:
     command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
     volumes:
       - /Users/juan-manuelcabrera/code/sandbox/redis-mess/confs/master_1.conf:/usr/local/etc/redis/redis.conf
-    ports:
-      - 6370:6370
-      - 16370:16370
+    # ports:
+    #   - 6370:6370
+    #   - 16370:16370
     network_mode: host
   redis-S1:
     image: redis:5.0.6
     command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
     volumes:
       - /Users/juan-manuelcabrera/code/sandbox/redis-mess/confs/slave_1.conf:/usr/local/etc/redis/redis.conf
-    ports:
-      - 6371:6371
-      - 16371:16371
+    # ports:
+    #   - 6371:6371
+    #   - 16371:16371
     network_mode: host
   redis-M2:
     image: redis:5.0.6
     command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
     volumes:
       - /Users/juan-manuelcabrera/code/sandbox/redis-mess/confs/master_2.conf:/usr/local/etc/redis/redis.conf
-    ports:
-      - 6380:6380
-      - 16380:16380
+    # ports:
+    #   - 6380:6380
+    #   - 16380:16380
     network_mode: host
   redis-S2:
     image: redis:5.0.6
     command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
     volumes:
       - /Users/juan-manuelcabrera/code/sandbox/redis-mess/confs/slave_2.conf:/usr/local/etc/redis/redis.conf
-    ports:
-      - 6381:6381
-      - 16381:16381
+    # ports:
+    #   - 6381:6381
+    #   - 16381:16381
     network_mode: host
   redis-M3:
     image: redis:5.0.6
     command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
     volumes:
       - /Users/juan-manuelcabrera/code/sandbox/redis-mess/confs/master_3.conf:/usr/local/etc/redis/redis.conf
-    ports:
-      - 6390:6390
-      - 16390:16390
+    # ports:
+    #   - 6390:6390
+    #   - 16390:16390
     network_mode: host
   redis-S3:
     image: redis:5.0.6
     command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
     volumes:
       - /Users/juan-manuelcabrera/code/sandbox/redis-mess/confs/slave_3.conf:/usr/local/etc/redis/redis.conf
-    ports:
-      - 6391:6391
-      - 16391:16391
+    # ports:
+    #   - 6391:6391
+    #   - 16391:16391
     network_mode: host
